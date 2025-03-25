@@ -1,0 +1,33 @@
+@keyframes scrollopp {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll-rtl {
+    display: flex;
+    white-space: nowrap;
+    animation: scrollopp linear infinite;
+}
+
+
+
+@keyframes scroll {
+    from {
+        transform: translateX(-50%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.animate-scroll-ltr {
+    display: flex;
+    white-space: nowrap;
+    animation: scroll linear infinite;
+}
