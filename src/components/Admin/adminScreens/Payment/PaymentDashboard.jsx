@@ -5,7 +5,7 @@ const PaymentDashboard = () => {
     const [selectedPayment, setSelectedPayment] = useState(null);
 
     useEffect(() => {
-        fetch("http://192.168.29.131:8080/get-payments")
+        fetch("http://localhost:8080/payments/get-payments")
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
@@ -21,7 +21,7 @@ const PaymentDashboard = () => {
         if (!window.confirm("Are you sure you want to refund this payment?")) return;
 
         try {
-            const response = await fetch("http://192.168.29.131:8080/issue-refund", {
+            const response = await fetch("http://localhost:8080/payments/issue-refund", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ payment_id: paymentId }),
