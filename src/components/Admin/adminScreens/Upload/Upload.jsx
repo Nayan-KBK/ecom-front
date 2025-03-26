@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Button, Form, Input, Select, message, InputNumber } from 'antd';
+import { Upload, Button, Input, Select, message, InputNumber, Form } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -12,6 +12,7 @@ const UploadComponent = () => {
   const [subCategory, setSubCategory] = useState('');
   const [price, setPrice] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   // Handle file upload
   const handleFileChange = ({ fileList }) => {
@@ -32,33 +33,59 @@ const UploadComponent = () => {
     return Object.keys(formErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Validate form before submitting
     if (!validateForm()) {
       return;
     }
-
-    // Simulate form submission
-    console.log('Form submitted:', { name, tags, category, subCategory, price, file });
-    message.success('File uploaded successfully!');
-    
-    // Reset form after submission
-    setName('');
-    setTags('');
-    setCategory('');
-    setSubCategory('');
-    setPrice('');
-    setFile(null);
+  
+    setLoading(true);
+  
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('tags', tags);
+    formData.append('category', category);
+    formData.append('subCategory', subCategory);
+    formData.append('price', price);
+    formData.append('file', file); // Append the file
+  
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        message.success('File uploaded successfully!');
+        // Reset form after successful upload
+        setName('');
+        setTags('');
+        setCategory('');
+        setSubCategory('');
+        setPrice('');
+        setFile(null);
+      } else {
+        message.error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      message.error('File upload failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
-
+  
   return (
-    <div className="max-w-[100vw,] mx-auto p-6 bg-white shadow-md rounded-lg">
+    <div className="max-w-[100vw] mx-auto p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Upload Your Design</h2>
       <form onSubmit={handleSubmit}>
-        {/* Dropzone for File Upload - Wide and at the top */}
-        <div className="mb-6 ">
+        {/* Dropzone for File Upload */}
+        <div className="mb-6">
           <label htmlFor="file" className="block text-sm font-semibold text-gray-700 mb-2">
             Upload ZIP File
           </label>
@@ -66,7 +93,7 @@ const UploadComponent = () => {
             beforeUpload={(file) => {
               const isZip = file.type === 'application/zip';
               if (!isZip) {
-                message.error('You can only upload ZIP file!');
+                message.error('You can only upload ZIP files!');
               }
               return isZip;
             }}
@@ -166,7 +193,7 @@ const UploadComponent = () => {
           {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
         </div>
 
-        <Button type="primary" htmlType="submit" className="w-full mt-4">
+        <Button type="primary" htmlType="submit" className="w-full mt-4" loading={loading}>
           Upload Design
         </Button>
       </form>

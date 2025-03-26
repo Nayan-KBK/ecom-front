@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-
 const PaymentDashboard = () => {
     const [payments, setPayments] = useState([]);
     const [selectedPayment, setSelectedPayment] = useState(null);
@@ -45,6 +44,31 @@ const PaymentDashboard = () => {
         }
     };
 
+    const handleCapture = async (paymentId, amount) => {
+        if (!window.confirm("Are you sure you want to capture this payment?")) return;
+
+        try {
+            const response = await fetch(`${BACKEND_BASE_URL}/payments/capture-payment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ payment_id: paymentId, amount }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert("✅ Payment Captured Successfully!");
+                setPayments(payments.map(payment =>
+                    payment.id === paymentId ? { ...payment, status: "Captured" } : payment
+                ));
+            } else {
+                alert("❌ Capture Failed! Try again.");
+            }
+        } catch (error) {
+            console.error("Capture Error:", error);
+            alert("❌ Capture request failed.");
+        }
+    };
+
     return (
         <div className="p-4">
             <h2 className="text-xl font-bold mb-4">Payment Transactions</h2>
@@ -74,12 +98,20 @@ const PaymentDashboard = () => {
                                 >
                                     Details
                                 </button>
-                                {payment.status !== "Refunded" && (
+                                {payment.status !== "Refunded" && payment.status !== "Captured" && (
                                     <button
                                         onClick={() => handleRefund(payment.id)}
                                         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                                     >
                                         Issue Refund
+                                    </button>
+                                )}
+                                {payment.status === "Failed" && (
+                                    <button
+                                        onClick={() => handleCapture(payment.id, payment.amount)}
+                                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                    >
+                                        Capture Payment
                                     </button>
                                 )}
                             </td>
