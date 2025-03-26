@@ -7,7 +7,7 @@ const Checkout = () => {
   // Static product details
   const product = {
     name: "Wireless Headphones",
-    price: 10,
+    price: 150,
     currency: "INR",
     description: "High-quality wireless headphones with noise cancellation."
   };
