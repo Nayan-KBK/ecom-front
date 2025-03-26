@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+
 const PaymentDashboard = () => {
     const [payments, setPayments] = useState([]);
     const [selectedPayment, setSelectedPayment] = useState(null);
 
     useEffect(() => {
-        fetch("http://localhost:8080/payments/get-payments")
+        fetch(`${BACKEND_BASE_URL}/payments/get-payments`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
