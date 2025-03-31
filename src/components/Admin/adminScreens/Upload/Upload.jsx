@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Upload, Button, Input, Select, message, InputNumber, Form } from 'antd';
+import { Upload, Button, Input, Select, message, InputNumber } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const UploadComponent = () => {
   const [file, setFile] = useState(null);
+  // const [jpgFile, setJpgFile] = useState(null);
   const [name, setName] = useState('');
   const [tags, setTags] = useState('');
   const [category, setCategory] = useState('');
@@ -14,36 +15,108 @@ const UploadComponent = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+
+
+
+
+
+
+
+  const validateFileType = (file) => {
+    console.log('Validating file:', file); // Debugging line to see file details
+
+    // Check if file type is ZIP or if file extension ends with .zip
+    const isZip = file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip');
+    console.log('Is Valid Type (ZIP):', isZip); // Debugging line to check if file is a ZIP
+
+    // If it's not a ZIP file
+    if (!isZip) {
+      alert("You can only upload ZIP files!"); // Alert user
+      message.error('You can only upload ZIP files!');
+      return false; // Reject the file if it's not a ZIP
+    }
+
+    // Check for ZIP file size limit (e.g., 10MB max)
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      message.error('ZIP file must be smaller than 10MB');
+      return false; // Reject if ZIP file is too large
+    }
+
+    return true; // Allow upload if it's a valid ZIP file
+  };
+
+  // Handle before file upload
+  const beforeUpload = (file, fileList) => {
+    console.log('beforeUpload file:', file); // Debugging line to inspect file
+    console.log('beforeUpload fileList:', fileList); // Debugging line to inspect file list
+
+    // Ensure only one file is uploaded at a time
+    if (fileList.length > 1) {
+      message.error('You can only upload one file at a time!');
+      return false; // Reject the file if more than one is selected
+    }
+
+    // Validate the file type and size
+    const isValid = validateFileType(file);
+    if (isValid) {
+      return false; // Prevent upload if file is invalid
+    }
+
+    return true; // Allow upload if it's a valid file
+  };
+
+
+
+
+  
   // Handle file upload
   const handleFileChange = ({ fileList }) => {
-    setFile(fileList[0]?.originFileObj || null);
+    // Check if a file is selected, update the state
+    const newFile = fileList[0]?.originFileObj || null;
+    setFile(newFile);
+
+    // Clear file error if file is selected
+    if (newFile) {
+      setErrors((prevErrors) => {
+        const { file, ...rest } = prevErrors; // Remove file error
+        return rest;
+      });
+    }
   };
+
+  // Handle JPG file upload
+  // const handleJpgChange = ({ fileList }) => {
+  //   setJpgFile(fileList[0]?.originFileObj || null);
+  // };
 
   // Validation function
   const validateForm = () => {
     let formErrors = {};
+
     if (!name.trim()) formErrors.name = 'Name is required';
     if (!tags.trim()) formErrors.tags = 'Tags are required';
     if (!category) formErrors.category = 'Category is required';
     if (!subCategory) formErrors.subCategory = 'Sub-category is required';
     if (!price) formErrors.price = 'Price is required';
-    if (!file) formErrors.file = 'Please upload a ZIP file';
+    if (!file) formErrors.file = 'Please upload a ZIP file'; // Validate file
+    // if (!jpgFile) formErrors.jpgFile = 'Please upload a JPG file'; // Validate JPG file
 
-    setErrors(formErrors);
-    return Object.keys(formErrors).length === 0;
+    setErrors(formErrors); // Update errors state
+    return Object.keys(formErrors).length === 0; // Return true if no errors
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Validate form before submitting
     if (!validateForm()) {
+      console.log("Form is invalid", errors);
       return;
     }
-  
+
     setLoading(true);
-  
+
     const formData = new FormData();
     formData.append('name', name);
     formData.append('tags', tags);
@@ -51,16 +124,18 @@ const UploadComponent = () => {
     formData.append('subCategory', subCategory);
     formData.append('price', price);
     formData.append('file', file); // Append the file
-  
+    // formData.append('jpgFile', jpgFile);
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload/upload`, {
         method: 'POST',
         body: formData,
       });
-  
+
       const data = await response.json();
-  
-      if (data.success) {
+      console.log(data);
+
+      if (data) {
         message.success('File uploaded successfully!');
         // Reset form after successful upload
         setName('');
@@ -69,6 +144,7 @@ const UploadComponent = () => {
         setSubCategory('');
         setPrice('');
         setFile(null);
+        // setJpgFile(null);
       } else {
         message.error(data.message || 'Upload failed');
       }
@@ -79,26 +155,35 @@ const UploadComponent = () => {
       setLoading(false);
     }
   };
-  
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
   return (
     <div className="max-w-[100vw] mx-auto p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Upload Your Design</h2>
       <form onSubmit={handleSubmit}>
-        {/* Dropzone for File Upload */}
+        {/* Upload ZIP File */}
         <div className="mb-6">
           <label htmlFor="file" className="block text-sm font-semibold text-gray-700 mb-2">
             Upload ZIP File
           </label>
           <Upload
-            beforeUpload={(file) => {
-              const isZip = file.type === 'application/zip';
-              if (!isZip) {
-                message.error('You can only upload ZIP files!');
-              }
-              return isZip;
-            }}
+            beforeUpload={beforeUpload}
             onChange={handleFileChange}
-            showUploadList={false} // Hide default file list
+            showUploadList={true} // Show file list
+            maxCount={1}
           >
             <div className="border-dashed border-2 p-10 rounded-xl cursor-pointer text-center bg-gray-50">
               <UploadOutlined className="text-4xl mb-4 text-gray-600" />
